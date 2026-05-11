@@ -5,7 +5,7 @@ from scribe import generate_medical_note_with_raw
 st.set_page_config(page_title="Gemma Medical Scribe", page_icon="⚕️")
 
 st.title("⚕️ Gemma Offline Medical Scribe")
-st.markdown("""
+st.write("API Response:", data)
 This tool uses **Gemma** via **Ollama** to transform medical transcripts into structured SOAP notes.
 """)
 
