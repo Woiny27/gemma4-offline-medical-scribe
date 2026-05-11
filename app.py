@@ -1,6 +1,6 @@
 import streamlit as st
 import ollama
-from scribe import generate_medical_note
+from scribe import generate_medical_note_with_raw
 
 st.set_page_config(page_title="Gemma Medical Scribe", page_icon="⚕️")
 
@@ -27,12 +27,14 @@ if st.button("Generate SOAP Note"):
     else:
         with st.spinner("Processing with Gemma..."):
             try:
-                # We can wrap the generate_medical_note to use the custom model name if needed,
-                # but for now we'll use the existing function which defaults to 'gemma'.
-                note = generate_medical_note(transcript_input)
+                # Use the updated function to get both note and raw response
+                note, raw_response = generate_medical_note_with_raw(transcript_input, model=model_name)
                 
                 st.subheader("Generated SOAP Note")
                 st.markdown(note)
+                
+                with st.expander("View Raw API Response"):
+                    st.write("API Response:", raw_response)
                 
                 st.download_button(
                     label="Download Note as TXT",
