@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("⚕️ Gemma-Medical-Scribe")
+st.title("⚕️ Gemma Medical Scribe")
 st.subheader("Offline Clinical Reasoning at the Edge")
 st.caption("Powered by Gemma 4 E4B · Running locally via Ollama · Zero internet required")
 
