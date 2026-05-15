@@ -46,8 +46,11 @@ if st.button("Generate Summary"):
             try:
                 if uploaded_chart:
                     image_path = None
+                    allowed_suffixes = {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
+                    file_extension = os.path.splitext(uploaded_chart.name)[1].lower()
+                    safe_suffix = file_extension if file_extension in allowed_suffixes else ".png"
                     with tempfile.NamedTemporaryFile(
-                        suffix=f"_{uploaded_chart.name}", delete=False
+                        suffix=safe_suffix, delete=False
                     ) as tmp_file:
                         tmp_file.write(uploaded_chart.getvalue())
                         image_path = tmp_file.name
