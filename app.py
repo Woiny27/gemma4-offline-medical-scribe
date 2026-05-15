@@ -1,50 +1,68 @@
-import streamlit as st
 import ollama
-from scribe import generate_medical_note_with_raw
+import pytesseract
+import streamlit as st
+from PIL import Image
 
-st.set_page_config(page_title="Gemma Medical Scribe", page_icon="⚕️")
 
+def generate_medical_summary(patient_notes: str) -> str:
+    response = ollama.chat(
+        model="gemma4:e4b",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a professional medical scribe. "
+                    "Structure notes clearly and flag any urgent findings."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"Summarize these notes into a SOAP format: {patient_notes}",
+            },
+        ],
+    )
+    return response["message"]["content"]
+
+
+st.set_page_config(page_title="Gemma Offline Medical Scribe", page_icon="⚕️")
 st.title("⚕️ Gemma Offline Medical Scribe")
-st.write("API Response:", data)
-This tool uses **Gemma** via **Ollama** to transform medical transcripts into structured SOAP notes.
-""")
+st.caption("Privacy focused: all processing runs locally.")
 
-with st.sidebar:
-    st.header("Settings")
-    model_name = st.text_input("Ollama Model", value="gemma")
-    st.info("Ensure Ollama is running and the model is pulled.")
+tab1, tab2 = st.tabs(["Manual Notes", " Scan Chart"])
 
-# Text area for the transcript
-transcript_input = st.text_area(
-    "Paste the medical transcript here:",
-    height=300,
-    placeholder="Doctor: How are you feeling today?\nPatient: I've had a headache for two days..."
-)
+with tab1:
+    notes = st.text_area(
+        "Enter raw patient observations:",
+        height=200,
+        placeholder=(
+            "e.g. 34F, persistent cough 3 weeks, night sweats, "
+            "weight loss 4kg, T 38.4°C, SpO2 94%…"
+        ),
+    )
+    if st.button("Generate SOAP Note", type="primary"):
+        if notes.strip():
+            with st.spinner("Gemma 4 E4B reasoning locally…"):
+                summary = generate_medical_summary(notes)
+            st.markdown("### Generated SOAP Note")
+            st.markdown(summary)
+            st.download_button("Download Note", summary, file_name="soap_note.txt")
+        else:
+            st.warning("Please enter patient observations first.")
 
-if st.button("Generate SOAP Note"):
-    if transcript_input.strip() == "":
-        st.warning("Please enter a transcript first.")
-    else:
-        with st.spinner("Processing with Gemma..."):
-            try:
-                # Use the updated function to get both note and raw response
-                note, raw_response = generate_medical_note_with_raw(transcript_input, model=model_name)
-                
-                st.subheader("Generated SOAP Note")
-                st.markdown(note)
-                
-                with st.expander("View Raw API Response"):
-                    st.write("API Response:", raw_response)
-                
-                st.download_button(
-                    label="Download Note as TXT",
-                    data=note,
-                    file_name="soap_note.txt",
-                    mime="text/plain"
-                )
-            except Exception as e:
-                st.error(f"Error connecting to Ollama: {e}")
-                st.info("Check if Ollama is running (`ollama serve`) and the model is available.")
-
-st.divider()
-st.caption("Privacy focused: All processing happens locally on your machine.")
+with tab2:
+    uploaded = st.file_uploader(
+        "Upload a photo of the patient chart",
+        type=["jpg", "jpeg", "png"],
+    )
+    if uploaded:
+        img = Image.open(uploaded)
+        st.image(img, caption="Uploaded Chart", use_container_width=True)
+        if st.button("Transcribe & Analyse", type="primary"):
+            with st.spinner("Running OCR + Gemma 4 E4B locally…"):
+                raw_text = pytesseract.image_to_string(img)
+                summary = generate_medical_summary(raw_text)
+            st.markdown("### OCR Extracted Text")
+            st.code(raw_text)
+            st.markdown("### Generated SOAP Note")
+            st.markdown(summary)
+            st.download_button("Download Note", summary, file_name="soap_note.txt")
