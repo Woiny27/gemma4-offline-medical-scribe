@@ -22,7 +22,7 @@ python scribe.py
 
 ## Raspberry Pi Deployment for TFLite Experiments
 
-If you export a `quantized_model.tflite` from `/home/runner/work/gemma4-offline-medical-scribe/gemma4-offline-medical-scribe/the_gemma_4_good_hackathon.ipynb`, you can deploy it to a Raspberry Pi as follows:
+If you export a `quantized_model.tflite` from `the_gemma_4_good_hackathon.ipynb`, you can deploy it to a Raspberry Pi as follows:
 
 1. **Prepare the Raspberry Pi**
    - Install Raspberry Pi OS.
@@ -46,4 +46,4 @@ If you export a `quantized_model.tflite` from `/home/runner/work/gemma4-offline-
      python3 run_inference.py
      ```
 
-See `/home/runner/work/gemma4-offline-medical-scribe/gemma4-offline-medical-scribe/the_gemma_4_good_hackathon.ipynb` for the fuller example workflow and sample inference code.
+See `the_gemma_4_good_hackathon.ipynb` for the fuller example workflow and sample inference code.
