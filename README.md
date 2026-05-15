@@ -36,11 +36,13 @@ If you export a `quantized_model.tflite` from `the_gemma_4_good_hackathon.ipynb`
    - Copy the model to the device with `scp`, `rsync`, or similar tools.
    - Example:
      ```bash
-     scp quantized_model.tflite pi@<raspberry_pi_ip_address>:/home/pi/
+     scp quantized_model.tflite pi@RASPBERRY_PI_IP:/home/pi/
      ```
+   - Replace `RASPBERRY_PI_IP` with your Pi's actual IP address.
 
 3. **Run inference on the Pi**
    - Create a small Python script that loads `quantized_model.tflite` with `tflite_runtime.interpreter`.
+   - Use the sample inference code in `the_gemma_4_good_hackathon.ipynb` as the template for `run_inference.py`.
    - Run it with:
      ```bash
      python3 run_inference.py
