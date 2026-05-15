@@ -1,4 +1,5 @@
 import unittest
+import tempfile
 from unittest.mock import patch
 
 import scribe
@@ -33,10 +34,11 @@ class TestScribe(unittest.TestCase):
         mock_ocr.return_value = "raw chart"
         mock_summary.return_value = "structured"
 
-        result = scribe.process_chart("/tmp/chart.png")
+        with tempfile.NamedTemporaryFile(suffix=".png") as chart_file:
+            result = scribe.process_chart(chart_file.name)
 
         self.assertEqual(result, "structured")
-        mock_ocr.assert_called_once_with("/tmp/chart.png")
+        mock_ocr.assert_called_once_with(chart_file.name)
         mock_summary.assert_called_once_with("raw chart", model="gemma4:e4b")
 
 

@@ -7,11 +7,11 @@ from scribe import process_chart, run_agent
 
 st.set_page_config(
     page_title="Gemma Medical Scribe",
-    page_icon="🩺",
+    page_icon="⚕️",
     layout="wide",
 )
 
-st.title("🩺 Gemma-Medical-Scribe")
+st.title("⚕️ Gemma-Medical-Scribe")
 st.subheader("Offline Clinical Reasoning at the Edge")
 st.caption("Powered by Gemma 4 E4B · Running locally via Ollama · Zero internet required")
 
