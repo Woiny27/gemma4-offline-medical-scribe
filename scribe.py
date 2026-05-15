@@ -75,7 +75,6 @@ def transcribe_chart(image_path):
 
     img = Image.open(image_path)
     raw_text = pytesseract.image_to_string(img)
-    print(f"Raw OCR Output:\n{raw_text}\n")
     return raw_text
 
 
