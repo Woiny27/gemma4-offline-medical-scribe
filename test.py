@@ -43,7 +43,8 @@ class TestScribeAgenticSkills(unittest.TestCase):
             "message": {"content": "Structured SOAP note"},
         }
 
-        scribe.run_agent("Explain the term 'Xyzosis' in the assessment.")
+        result = scribe.run_agent("Explain the term 'Xyzosis' in the assessment.")
+        self.assertEqual(result, "Structured SOAP note")
         call_kwargs = mock_chat.call_args.kwargs
         user_prompt = call_kwargs["messages"][1]["content"]
         self.assertIn(

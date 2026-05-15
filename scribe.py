@@ -5,7 +5,7 @@ except ImportError:  # pragma: no cover - runtime dependency fallback
     class _OllamaFallback:
         @staticmethod
         def chat(*args, **kwargs):
-            raise ImportError("ollama is required to generate notes.")
+            raise ImportError("ollama package is required. Install it using: pip install ollama")
 
     ollama = _OllamaFallback()
 
@@ -56,6 +56,14 @@ def generate_medical_note_with_raw(transcript, model='gemma'):
     return response['message']['content'], response
 
 
+def generate_medical_note(transcript, model='gemma'):
+    """
+    Returns only the generated SOAP note content.
+    """
+    note, _ = generate_medical_note_with_raw(transcript, model=model)
+    return note
+
+
 def _extract_terms(prompt):
     extracted_terms = []
     seen_terms = set()
@@ -79,7 +87,11 @@ def _extract_terms(prompt):
 
 def run_agent(prompt, model='gemma'):
     """
-    Runs an agentic SOAP-note generation flow with medical term enrichment.
+    Generate a SOAP note from a prompt using local agentic tools.
+
+    Extracts quoted and known medical terms from `prompt`, enriches the prompt
+    with local dictionary definitions, and then requests note generation using
+    the selected Ollama `model`. Returns the generated note text.
     """
     terms = _extract_terms(prompt)
     definitions = [
@@ -96,8 +108,7 @@ def run_agent(prompt, model='gemma'):
     else:
         enriched_prompt = prompt
 
-    note, _ = generate_medical_note_with_raw(enriched_prompt, model=model)
-    return note
+    return generate_medical_note(enriched_prompt, model=model)
 
 if __name__ == "__main__":
     prompt = "Analyze the term 'Dyspnea' and include its definition in the patient's summary."
