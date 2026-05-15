@@ -55,10 +55,13 @@ def medical_lookup(term, model="gemma4:e4b"):
 def _run_agent_with_raw(prompt, model="gemma4:e4b"):
     terms = extract_medical_terms(prompt, model=model)
 
-    context = ""
+    context_lines = []
     for term in terms:
         definition = medical_lookup(term, model=model)
-        context += f"\n- {term}: {definition}"
+        context_lines.append(f"- {term}: {definition}")
+    context = ""
+    if context_lines:
+        context = "\n" + "\n".join(context_lines)
 
     final_response = ollama.chat(
         model=model,
