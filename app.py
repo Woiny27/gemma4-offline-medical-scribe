@@ -45,7 +45,6 @@ if st.button("Generate Summary"):
         with st.spinner("Processing locally with Gemma..."):
             try:
                 if uploaded_chart:
-                    image_path = None
                     allowed_suffixes = {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
                     file_extension = os.path.splitext(uploaded_chart.name)[1].lower()
                     safe_suffix = file_extension if file_extension in allowed_suffixes else ".png"
@@ -57,7 +56,7 @@ if st.button("Generate Summary"):
                     try:
                         result = process_chart(image_path)
                     finally:
-                        if image_path and os.path.exists(image_path):
+                        if os.path.exists(image_path):
                             os.unlink(image_path)
                 else:
                     result = run_agent(prompt)

@@ -1,6 +1,6 @@
 try:
     import ollama
-except ImportError:  # pragma: no cover - used for local test environments without Ollama package
+except ImportError:  # pragma: no cover - used in test environments where ollama is not installed
     class _OllamaFallback:
         @staticmethod
         def chat(*_args, **_kwargs):
