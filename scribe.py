@@ -50,17 +50,21 @@ def generate_medical_note_with_raw(transcript, model='gemma'):
 
 def _extract_terms(prompt):
     extracted_terms = []
+    seen_terms = set()
 
     quoted_terms = re.findall(r"'([^']+)'", prompt)
     for term in quoted_terms:
         normalized = term.strip()
-        if normalized and normalized.lower() not in [t.lower() for t in extracted_terms]:
+        lowered = normalized.lower()
+        if normalized and lowered not in seen_terms:
             extracted_terms.append(normalized)
+            seen_terms.add(lowered)
 
     lowered_prompt = prompt.lower()
     for known_term in MEDICAL_DB:
-        if known_term in lowered_prompt and known_term not in [t.lower() for t in extracted_terms]:
+        if known_term in lowered_prompt and known_term not in seen_terms:
             extracted_terms.append(known_term)
+            seen_terms.add(known_term)
 
     return extracted_terms
 
@@ -79,7 +83,7 @@ def run_agent(prompt, model='gemma'):
         enriched_prompt = (
             f"{prompt}\n\n"
             "Medical definitions to include in the summary:\n"
-            f"{chr(10).join(definitions)}"
+            f"{'\n'.join(definitions)}"
         )
     else:
         enriched_prompt = prompt
@@ -90,4 +94,4 @@ def run_agent(prompt, model='gemma'):
 if __name__ == "__main__":
     prompt = "Analyze the term 'Dyspnea' and include its definition in the patient's summary."
     result = run_agent(prompt)
-    print(f"\nFinal SOAP Note:\n{result}")
+    print("Generated SOAP note successfully.")
