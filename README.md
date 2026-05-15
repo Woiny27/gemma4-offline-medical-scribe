@@ -1,21 +1,40 @@
 # Gemma 4 Offline Medical Scribe
 
-A local, privacy-focused medical scribe application that uses **Ollama** and **Gemma 4** to transcribe and summarize medical consultations offline.
+A privacy-focused medical scribe that runs locally with Ollama + Gemma and supports OCR for paper charts.
 
 ## Setup
 
-1. **Install Ollama**: Follow instructions at [ollama.com](https://ollama.com).
-2. **Pull Gemma 4**:
+1. Install Ollama from [ollama.com](https://ollama.com)
+2. Pull the model:
    ```bash
-   ollama pull gemma:7b  # or whichever version you prefer
+   ollama pull gemma4:e4b
    ```
-3. **Install dependencies**:
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-## Usage
+## Example usage
+
+```python
+from scribe import run_agent
+
+prompt = "Analyze the term 'Dyspnea' and include its definition in the patient's summary."
+result = run_agent(prompt)
+print(f"\nFinal SOAP Note:\n{result}")
+```
+
+## OCR chart transcription
+
+```python
+from scribe import process_chart
+
+result = process_chart("patient_chart.jpg")
+print(result)
+```
+
+## Streamlit app
 
 ```bash
-python scribe.py
+streamlit run app.py
 ```

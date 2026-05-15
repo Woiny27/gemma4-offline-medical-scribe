@@ -1,32 +1,91 @@
-import ollama
-import json
+try:
+    import ollama
+except ImportError:  # pragma: no cover - used for local test environments without Ollama package
+    class _OllamaFallback:
+        @staticmethod
+        def chat(*_args, **_kwargs):
+            raise RuntimeError("The 'ollama' package is required to run inference.")
 
-def generate_medical_note_with_raw(transcript, model='gemma'):
+    ollama = _OllamaFallback()
+
+TERM_DEFINITIONS = {
+    "dyspnea": "Dyspnea means shortness of breath or difficult breathing.",
+}
+
+
+def enrich_prompt(prompt):
+    """Appends known medical definitions requested by the prompt."""
+    enriched_prompt = prompt
+    lowered = prompt.lower()
+    for term, definition in TERM_DEFINITIONS.items():
+        if term in lowered and definition.lower() not in lowered:
+            enriched_prompt = f"{enriched_prompt}\n\nReference definition: {definition}"
+    return enriched_prompt
+
+
+def generate_medical_summary(transcript, model="gemma4:e4b"):
+    """Summarizes medical content into a SOAP note."""
+    system_prompt = (
+        "You are a medical scribe. Summarize the provided medical content into a clear SOAP note "
+        "(Subjective, Objective, Assessment, Plan). Keep it clinically accurate and concise."
+    )
+    response = ollama.chat(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": transcript},
+        ],
+    )
+    return response["message"]["content"]
+
+
+def run_agent(prompt, model="gemma4:e4b"):
+    """Main helper used for text prompts."""
+    return generate_medical_summary(enrich_prompt(prompt), model=model)
+
+
+def generate_medical_note_with_raw(transcript, model="gemma4:e4b"):
     """
     Summarizes a medical transcript into a structured SOAP note.
     Returns both the note and the raw response.
     """
     system_prompt = (
-        "You are a medical scribe. Your task is to summarize the following doctor-patient "
-        "conversation into a professional, structured SOAP note (Subjective, Objective, "
-        "Assessment, Plan). Ensure medical accuracy and a professional tone."
+        "You are a medical scribe. Summarize the following doctor-patient conversation into a "
+        "professional SOAP note with Subjective, Objective, Assessment, and Plan sections."
     )
-    
-    response = ollama.chat(model=model, messages=[
-        {
-            'role': 'system',
-            'content': system_prompt,
-        },
-        {
-            'role': 'user',
-            'content': transcript,
-        },
-    ])
-    return response['message']['content'], response
+    response = ollama.chat(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": transcript},
+        ],
+    )
+    return response["message"]["content"], response
+
+
+def transcribe_chart(image_path):
+    """Extracts text from a chart image with local OCR."""
+    try:
+        import pytesseract
+        from PIL import Image
+    except ImportError as exc:
+        raise RuntimeError(
+            "OCR dependencies are missing. Install pillow and pytesseract."
+        ) from exc
+
+    img = Image.open(image_path)
+    raw_text = pytesseract.image_to_string(img)
+    print(f"Raw OCR Output:\n{raw_text}\n")
+    return raw_text
+
+
+def process_chart(image_path, model="gemma4:e4b"):
+    """Runs OCR and returns a structured medical summary."""
+    raw_notes = transcribe_chart(image_path)
+    return generate_medical_summary(raw_notes, model=model)
+
 
 if __name__ == "__main__":
-    # Placeholder for actual transcription logic
-    sample_transcript = "Patient: I've been having a persistent cough for 2 weeks. Doctor: Any fever?"
-    print("Generating SOAP Note...")
-    note, raw = generate_medical_note_with_raw(sample_transcript)
-    print(note)
+    prompt = "Analyze the term 'Dyspnea' and include its definition in the patient's summary."
+    result = run_agent(prompt)
+    print(f"\nFinal SOAP Note:\n{result}")

@@ -1,3 +1,5 @@
 ollama
 requests
 streamlit
+pillow
+pytesseract

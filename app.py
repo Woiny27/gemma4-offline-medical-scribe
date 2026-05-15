@@ -1,50 +1,68 @@
+import tempfile
+
 import streamlit as st
-import ollama
-from scribe import generate_medical_note_with_raw
 
-st.set_page_config(page_title="Gemma Medical Scribe", page_icon="⚕️")
+from scribe import process_chart, run_agent
 
-st.title("⚕️ Gemma Offline Medical Scribe")
-st.write("API Response:", data)
-This tool uses **Gemma** via **Ollama** to transform medical transcripts into structured SOAP notes.
-""")
-
-with st.sidebar:
-    st.header("Settings")
-    model_name = st.text_input("Ollama Model", value="gemma")
-    st.info("Ensure Ollama is running and the model is pulled.")
-
-# Text area for the transcript
-transcript_input = st.text_area(
-    "Paste the medical transcript here:",
-    height=300,
-    placeholder="Doctor: How are you feeling today?\nPatient: I've had a headache for two days..."
+st.set_page_config(
+    page_title="Gemma Medical Scribe",
+    page_icon="🩺",
+    layout="wide",
 )
 
-if st.button("Generate SOAP Note"):
-    if transcript_input.strip() == "":
-        st.warning("Please enter a transcript first.")
+st.title("🩺 Gemma-Medical-Scribe")
+st.subheader("Offline Clinical Reasoning at the Edge")
+st.caption("Powered by Gemma 4 E4B · Running locally via Ollama · Zero internet required")
+
+with st.sidebar:
+    st.markdown("## System Status")
+    st.success("Gemma 4 E4B — Online (Local)")
+    st.error("Internet — Disconnected")
+    st.info("Mode: Full Offline Edge")
+    st.markdown("---")
+    st.markdown("**Model:** gemma4:e4b")
+    st.markdown("**Runtime:** Ollama")
+    st.markdown("**OCR Engine:** Tesseract")
+
+st.markdown("### Text Prompt")
+prompt = st.text_area(
+    "Enter patient transcript or task",
+    height=220,
+    placeholder="Analyze the term 'Dyspnea' and include its definition in the patient's summary.",
+)
+
+st.markdown("### OCR Chart Transcription (Optional)")
+uploaded_chart = st.file_uploader(
+    "Upload scanned/photographed patient chart",
+    type=["png", "jpg", "jpeg", "tiff", "bmp"],
+)
+
+if st.button("Generate Summary"):
+    if not prompt.strip() and not uploaded_chart:
+        st.warning("Please enter a prompt or upload a chart image.")
     else:
-        with st.spinner("Processing with Gemma..."):
+        with st.spinner("Processing locally with Gemma..."):
             try:
-                # Use the updated function to get both note and raw response
-                note, raw_response = generate_medical_note_with_raw(transcript_input, model=model_name)
-                
-                st.subheader("Generated SOAP Note")
-                st.markdown(note)
-                
-                with st.expander("View Raw API Response"):
-                    st.write("API Response:", raw_response)
-                
+                if uploaded_chart:
+                    with tempfile.NamedTemporaryFile(
+                        suffix=f"_{uploaded_chart.name}", delete=False
+                    ) as tmp_file:
+                        tmp_file.write(uploaded_chart.getvalue())
+                        image_path = tmp_file.name
+                    result = process_chart(image_path)
+                else:
+                    result = run_agent(prompt)
+
+                st.subheader("Final SOAP Note")
+                st.markdown(result)
                 st.download_button(
                     label="Download Note as TXT",
-                    data=note,
+                    data=result,
                     file_name="soap_note.txt",
-                    mime="text/plain"
+                    mime="text/plain",
                 )
-            except Exception as e:
-                st.error(f"Error connecting to Ollama: {e}")
-                st.info("Check if Ollama is running (`ollama serve`) and the model is available.")
+            except Exception as exc:
+                st.error(f"Failed to process input: {exc}")
 
 st.divider()
-st.caption("Privacy focused: All processing happens locally on your machine.")
+st.caption("Privacy focused: all processing happens locally on your machine.")
