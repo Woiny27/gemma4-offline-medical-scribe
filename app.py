@@ -5,23 +5,29 @@ from PIL import Image
 
 
 def generate_medical_summary(patient_notes: str) -> str:
-    response = ollama.chat(
-        model="gemma4:e4b",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a professional medical scribe. "
-                    "Structure notes clearly and flag any urgent findings."
-                ),
-            },
-            {
-                "role": "user",
-                "content": f"Summarize these notes into a SOAP format: {patient_notes}",
-            },
-        ],
-    )
-    return response["message"]["content"]
+    try:
+        response = ollama.chat(
+            model="gemma4:e4b",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a professional medical scribe. "
+                        "Structure notes clearly and flag any urgent findings."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"Summarize these notes into a SOAP format: {patient_notes}",
+                },
+            ],
+        )
+        return response["message"]["content"]
+    except Exception as exc:
+        raise RuntimeError(
+            "Unable to reach local Ollama model. Ensure `ollama serve` is running "
+            "and `gemma4:e4b` is available."
+        ) from exc
 
 
 st.set_page_config(page_title="Gemma Offline Medical Scribe", page_icon="⚕️")
@@ -41,11 +47,14 @@ with tab1:
     )
     if st.button("Generate SOAP Note", type="primary"):
         if notes.strip():
-            with st.spinner("Gemma 4 E4B reasoning locally…"):
-                summary = generate_medical_summary(notes)
-            st.markdown("### Generated SOAP Note")
-            st.markdown(summary)
-            st.download_button("Download Note", summary, file_name="soap_note.txt")
+            try:
+                with st.spinner("Gemma 4 E4B reasoning locally…"):
+                    summary = generate_medical_summary(notes)
+                st.markdown("### Generated SOAP Note")
+                st.markdown(summary)
+                st.download_button("Download Note", summary, file_name="soap_note.txt")
+            except RuntimeError as err:
+                st.error(str(err))
         else:
             st.warning("Please enter patient observations first.")
 
@@ -60,9 +69,20 @@ with tab2:
         if st.button("Transcribe & Analyse", type="primary"):
             with st.spinner("Running OCR + Gemma 4 E4B locally…"):
                 raw_text = pytesseract.image_to_string(img)
-                summary = generate_medical_summary(raw_text)
             st.markdown("### OCR Extracted Text")
             st.code(raw_text)
-            st.markdown("### Generated SOAP Note")
-            st.markdown(summary)
-            st.download_button("Download Note", summary, file_name="soap_note.txt")
+
+            if not raw_text.strip():
+                st.warning(
+                    "No readable text was found in the uploaded image. "
+                    "Please upload a clearer chart image."
+                )
+            else:
+                try:
+                    with st.spinner("Generating SOAP note from OCR text…"):
+                        summary = generate_medical_summary(raw_text)
+                    st.markdown("### Generated SOAP Note")
+                    st.markdown(summary)
+                    st.download_button("Download Note", summary, file_name="soap_note.txt")
+                except RuntimeError as err:
+                    st.error(str(err))

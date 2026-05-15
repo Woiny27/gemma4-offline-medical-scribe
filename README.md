@@ -13,9 +13,13 @@ A local, privacy-focused medical scribe application that uses **Ollama** and **G
    ```bash
    pip install -r requirements.txt
    ```
+4. **Install Tesseract OCR engine** (required for image/chart transcription with `pytesseract`):
+   - Ubuntu/Debian: `sudo apt-get install tesseract-ocr`
+   - macOS (Homebrew): `brew install tesseract`
+   - Windows: install from the Tesseract OCR project binaries and ensure it is on PATH.
 
 ## Usage
 
 ```bash
-python scribe.py
+streamlit run app.py
 ```
