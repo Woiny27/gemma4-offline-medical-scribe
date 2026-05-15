@@ -1,9 +1,5 @@
 import unittest
-import types
-import sys
 from unittest.mock import patch
-
-sys.modules.setdefault("ollama", types.SimpleNamespace(chat=lambda **kwargs: {}))
 
 import scribe
 
@@ -54,6 +50,17 @@ class TestScribeAgenticSkills(unittest.TestCase):
             "Xyzosis: Definition for Xyzosis: [Retrieved from local medical database]",
             user_prompt,
         )
+
+    @patch("scribe.ollama.chat")
+    def test_run_agent_without_terms_does_not_add_definitions_block(self, mock_chat):
+        mock_chat.return_value = {
+            "message": {"content": "Structured SOAP note"},
+        }
+
+        scribe.run_agent("Summarize this visit in SOAP format.")
+        call_kwargs = mock_chat.call_args.kwargs
+        user_prompt = call_kwargs["messages"][1]["content"]
+        self.assertNotIn("Medical definitions to include in the summary:", user_prompt)
 
 
 if __name__ == "__main__":

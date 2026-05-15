@@ -1,5 +1,13 @@
-import ollama
 import re
+try:
+    import ollama
+except ImportError:  # pragma: no cover - runtime dependency fallback
+    class _OllamaFallback:
+        @staticmethod
+        def chat(*args, **kwargs):
+            raise ImportError("ollama is required to generate notes.")
+
+    ollama = _OllamaFallback()
 
 MEDICAL_DB = {
     "dyspnea": "Difficult or labored breathing; shortness of breath.",
@@ -75,7 +83,7 @@ def run_agent(prompt, model='gemma'):
     """
     terms = _extract_terms(prompt)
     definitions = [
-        f"- {term}: {tools['medical_lookup'](term)}"
+        f"- {term}: {medical_lookup(term)}"
         for term in terms
     ]
 
