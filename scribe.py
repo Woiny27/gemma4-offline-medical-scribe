@@ -1,5 +1,28 @@
 import ollama
-import json
+import re
+
+MEDICAL_DB = {
+    "dyspnea": "Difficult or labored breathing; shortness of breath.",
+    "tachycardia": "Abnormally rapid heart rate, typically over 100 bpm.",
+    "hypertension": "Persistently elevated blood pressure in the arteries.",
+    "bradycardia": "Abnormally slow heart rate, typically below 60 bpm.",
+    "edema": "Swelling caused by excess fluid trapped in body tissues.",
+}
+
+
+def medical_lookup(term):
+    """
+    Simulates an offline medical dictionary lookup.
+    """
+    return MEDICAL_DB.get(
+        term.lower(),
+        f"Definition for {term}: [Retrieved from local medical database]",
+    )
+
+
+tools = {
+    "medical_lookup": medical_lookup,
+}
 
 def generate_medical_note_with_raw(transcript, model='gemma'):
     """
@@ -24,9 +47,47 @@ def generate_medical_note_with_raw(transcript, model='gemma'):
     ])
     return response['message']['content'], response
 
+
+def _extract_terms(prompt):
+    extracted_terms = []
+
+    quoted_terms = re.findall(r"'([^']+)'", prompt)
+    for term in quoted_terms:
+        normalized = term.strip()
+        if normalized and normalized.lower() not in [t.lower() for t in extracted_terms]:
+            extracted_terms.append(normalized)
+
+    lowered_prompt = prompt.lower()
+    for known_term in MEDICAL_DB:
+        if known_term in lowered_prompt and known_term not in [t.lower() for t in extracted_terms]:
+            extracted_terms.append(known_term)
+
+    return extracted_terms
+
+
+def run_agent(prompt, model='gemma'):
+    """
+    Runs an agentic SOAP-note generation flow with medical term enrichment.
+    """
+    terms = _extract_terms(prompt)
+    definitions = [
+        f"- {term}: {tools['medical_lookup'](term)}"
+        for term in terms
+    ]
+
+    if definitions:
+        enriched_prompt = (
+            f"{prompt}\n\n"
+            "Medical definitions to include in the summary:\n"
+            f"{chr(10).join(definitions)}"
+        )
+    else:
+        enriched_prompt = prompt
+
+    note, _ = generate_medical_note_with_raw(enriched_prompt, model=model)
+    return note
+
 if __name__ == "__main__":
-    # Placeholder for actual transcription logic
-    sample_transcript = "Patient: I've been having a persistent cough for 2 weeks. Doctor: Any fever?"
-    print("Generating SOAP Note...")
-    note, raw = generate_medical_note_with_raw(sample_transcript)
-    print(note)
+    prompt = "Analyze the term 'Dyspnea' and include its definition in the patient's summary."
+    result = run_agent(prompt)
+    print(f"\nFinal SOAP Note:\n{result}")
