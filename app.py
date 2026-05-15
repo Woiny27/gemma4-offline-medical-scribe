@@ -1,3 +1,4 @@
+import os
 import tempfile
 
 import streamlit as st
@@ -44,12 +45,17 @@ if st.button("Generate Summary"):
         with st.spinner("Processing locally with Gemma..."):
             try:
                 if uploaded_chart:
+                    image_path = None
                     with tempfile.NamedTemporaryFile(
                         suffix=f"_{uploaded_chart.name}", delete=False
                     ) as tmp_file:
                         tmp_file.write(uploaded_chart.getvalue())
                         image_path = tmp_file.name
-                    result = process_chart(image_path)
+                    try:
+                        result = process_chart(image_path)
+                    finally:
+                        if image_path and os.path.exists(image_path):
+                            os.unlink(image_path)
                 else:
                     result = run_agent(prompt)
 
@@ -65,4 +71,4 @@ if st.button("Generate Summary"):
                 st.error(f"Failed to process input: {exc}")
 
 st.divider()
-st.caption("Privacy focused: all processing happens locally on your machine.")
+st.caption("Privacy-focused: all processing happens locally on your machine.")

@@ -82,9 +82,3 @@ def process_chart(image_path, model="gemma4:e4b"):
     """Runs OCR and returns a structured medical summary."""
     raw_notes = transcribe_chart(image_path)
     return generate_medical_summary(raw_notes, model=model)
-
-
-if __name__ == "__main__":
-    prompt = "Analyze the term 'Dyspnea' and include its definition in the patient's summary."
-    result = run_agent(prompt)
-    print(f"\nFinal SOAP Note:\n{result}")
