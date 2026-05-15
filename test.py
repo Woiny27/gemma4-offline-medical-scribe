@@ -63,6 +63,20 @@ class TestScribeAgenticSkills(unittest.TestCase):
         user_prompt = call_kwargs["messages"][1]["content"]
         self.assertNotIn("Medical definitions to include in the summary:", user_prompt)
 
+    @patch("scribe.ollama.chat")
+    def test_run_agent_handles_double_quoted_term(self, mock_chat):
+        mock_chat.return_value = {
+            "message": {"content": "Structured SOAP note"},
+        }
+
+        scribe.run_agent('Analyze "Dyspnea" and include definition.')
+        call_kwargs = mock_chat.call_args.kwargs
+        user_prompt = call_kwargs["messages"][1]["content"]
+        self.assertIn(
+            "Dyspnea: Difficult or labored breathing; shortness of breath.",
+            user_prompt,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

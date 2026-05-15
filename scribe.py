@@ -59,6 +59,13 @@ def generate_medical_note_with_raw(transcript, model='gemma'):
 def generate_medical_note(transcript, model='gemma'):
     """
     Returns only the generated SOAP note content.
+
+    Args:
+        transcript (str): Doctor-patient transcript or enriched prompt text.
+        model (str): Ollama model name to use for generation.
+
+    Returns:
+        str: Generated SOAP note content.
     """
     note, _ = generate_medical_note_with_raw(transcript, model=model)
     return note
@@ -68,8 +75,9 @@ def _extract_terms(prompt):
     extracted_terms = []
     seen_terms = set()
 
-    quoted_terms = re.findall(r"'([^']+)'", prompt)
-    for term in quoted_terms:
+    quoted_terms = re.findall(r"'([^']+)'|\"([^\"]+)\"", prompt)
+    flattened_terms = [term for pair in quoted_terms for term in pair if term]
+    for term in flattened_terms:
         normalized = term.strip()
         lowered = normalized.lower()
         if normalized and lowered not in seen_terms:
@@ -91,7 +99,14 @@ def run_agent(prompt, model='gemma'):
 
     Extracts quoted and known medical terms from `prompt`, enriches the prompt
     with local dictionary definitions, and then requests note generation using
-    the selected Ollama `model`. Returns the generated note text.
+    the selected Ollama `model`.
+
+    Args:
+        prompt (str): User instruction or transcript context.
+        model (str): Ollama model name to use for generation.
+
+    Returns:
+        str: Generated SOAP note text.
     """
     terms = _extract_terms(prompt)
     definitions = [
