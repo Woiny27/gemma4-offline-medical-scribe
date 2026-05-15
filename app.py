@@ -3,11 +3,15 @@ import pytesseract
 import streamlit as st
 from PIL import Image
 
+MODEL_NAME = "gemma4:e4b"
+DOWNLOAD_LABEL = "Download Note"
+DOWNLOAD_FILE = "soap_note.txt"
+
 
 def generate_medical_summary(patient_notes: str) -> str:
     try:
         response = ollama.chat(
-            model="gemma4:e4b",
+            model=MODEL_NAME,
             messages=[
                 {
                     "role": "system",
@@ -48,11 +52,11 @@ with tab1:
     if st.button("Generate SOAP Note", type="primary"):
         if notes.strip():
             try:
-                with st.spinner("Gemma 4 E4B reasoning locally…"):
+                with st.spinner("Running gemma4:e4b locally…"):
                     summary = generate_medical_summary(notes)
                 st.markdown("### Generated SOAP Note")
                 st.markdown(summary)
-                st.download_button("Download Note", summary, file_name="soap_note.txt")
+                st.download_button(DOWNLOAD_LABEL, summary, file_name=DOWNLOAD_FILE)
             except RuntimeError as err:
                 st.error(str(err))
         else:
@@ -66,8 +70,8 @@ with tab2:
     if uploaded:
         img = Image.open(uploaded)
         st.image(img, caption="Uploaded Chart", use_container_width=True)
-        if st.button("Transcribe & Analyse", type="primary"):
-            with st.spinner("Running OCR + Gemma 4 E4B locally…"):
+        if st.button("Transcribe & Analyze", type="primary"):
+            with st.spinner("Running OCR + gemma4:e4b locally…"):
                 raw_text = pytesseract.image_to_string(img)
             st.markdown("### OCR Extracted Text")
             st.code(raw_text)
@@ -83,6 +87,6 @@ with tab2:
                         summary = generate_medical_summary(raw_text)
                     st.markdown("### Generated SOAP Note")
                     st.markdown(summary)
-                    st.download_button("Download Note", summary, file_name="soap_note.txt")
+                    st.download_button(DOWNLOAD_LABEL, summary, file_name=DOWNLOAD_FILE)
                 except RuntimeError as err:
                     st.error(str(err))
