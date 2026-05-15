@@ -18,7 +18,7 @@ def enrich_prompt(prompt):
     enriched_prompt = prompt
     lowered = prompt.lower()
     for term, definition in TERM_DEFINITIONS.items():
-        if term in lowered and definition.lower() not in lowered:
+        if term in lowered:
             enriched_prompt = f"{enriched_prompt}\n\nReference definition: {definition}"
     return enriched_prompt
 

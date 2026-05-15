@@ -5,6 +5,22 @@ import streamlit as st
 
 from scribe import process_chart, run_agent
 
+
+def check_model_status():
+    try:
+        import ollama
+
+        models = ollama.list()
+        available = any(
+            model.get("model") == "gemma4:e4b"
+            for model in models.get("models", [])
+            if isinstance(model, dict)
+        )
+        return True, available
+    except Exception:
+        return False, False
+
+
 st.set_page_config(
     page_title="Gemma Medical Scribe",
     page_icon="⚕️",
@@ -16,8 +32,12 @@ st.subheader("Offline Clinical Reasoning at the Edge")
 st.caption("Powered by Gemma 4 E4B · Running locally via Ollama · Zero internet required")
 
 with st.sidebar:
+    ollama_online, model_available = check_model_status()
     st.markdown("## System Status")
-    st.success("Gemma 4 E4B — Online (Local)")
+    if ollama_online and model_available:
+        st.success("Gemma 4 E4B — Online (Local)")
+    else:
+        st.error("Gemma 4 E4B — Offline/Unavailable")
     st.error("Internet — Disconnected")
     st.info("Mode: Full Offline Edge")
     st.markdown("---")
@@ -48,16 +68,11 @@ if st.button("Generate Summary"):
                     allowed_suffixes = {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
                     file_extension = os.path.splitext(uploaded_chart.name)[1].lower()
                     safe_suffix = file_extension if file_extension in allowed_suffixes else ".png"
-                    with tempfile.NamedTemporaryFile(
-                        suffix=safe_suffix, delete=False
-                    ) as tmp_file:
-                        tmp_file.write(uploaded_chart.getvalue())
-                        image_path = tmp_file.name
-                    try:
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        image_path = os.path.join(temp_dir, f"chart{safe_suffix}")
+                        with open(image_path, "wb") as temp_chart:
+                            temp_chart.write(uploaded_chart.getvalue())
                         result = process_chart(image_path)
-                    finally:
-                        if os.path.exists(image_path):
-                            os.unlink(image_path)
                 else:
                     result = run_agent(prompt)
 
