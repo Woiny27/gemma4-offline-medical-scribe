@@ -30,7 +30,7 @@ def generate_medical_summary(patient_notes: str) -> str:
     except Exception as exc:
         raise RuntimeError(
             "Unable to reach local Ollama model. Ensure `ollama serve` is running "
-            "and `gemma4:e4b` is available."
+            f"and `{MODEL_NAME}` is available."
         ) from exc
 
 
